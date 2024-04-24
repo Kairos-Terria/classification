@@ -1,9 +1,7 @@
 import cv2
 import torch
 from numpy import random
-from models.experimental import attempt_load
-from utils.general import non_max_suppression, scale_coords, check_img_size
-from utils.plots import plot_one_box
+import numpy as np
 from pymycobot.mycobot import MyCobot
 import time
 
@@ -11,7 +9,7 @@ import time
 # get_coords는 현재 좌표를 얻어오는 메서드이며,
 # sync_send_coords는 주어진 좌표로 로봇을 이동시키는 메서드입니다.
 
-mc = MyCobot("/dev/ttyACM1", 115200)
+mc = MyCobot("/dev/ttyACM0", 115200)
 
 def approach_target_incrementally(mc, target_coords, increment=1, tolerance=10):
     current_coords = list(mc.get_coords())
@@ -63,12 +61,81 @@ mc.set_gripper_calibration()
 mc.set_gripper_mode(0)
 mc.init_eletric_gripper()
 
-# 모델 로드
-device = 'cpu'  # cuda 대신 cpu 사용
-model = attempt_load('yolov7-tiny.pt', map_location=device)
-model.to(device).eval()
-# 영상 소스
 cap = cv2.VideoCapture(2)
+
+# 색상에 따른 HSV 범위 설정 (빨간색 범위 확장)
+colors_hsv = {
+    'red_lower': [np.array([0, 120, 120]), np.array([10, 255, 255])],
+    'red_upper': [np.array([170, 120, 120]), np.array([180, 255, 255])],
+    'yellow': [np.array([22, 130, 140]), np.array([38, 255, 255])],  # 노란색 범위 확장
+    'blue': [np.array([100, 100, 120]), np.array([130, 255, 255])],
+    'purple': [np.array([125, 50, 50]), np.array([150, 255, 255])]
+}
+
+# 색상에 따른 BGR 값
+colors_bgr = {
+    'red': (0, 0, 255),
+    'yellow': (0, 255, 255),
+    'blue': (255, 0, 0),
+    'purple': (255, 0, 255)
+}
+
+# 최소 바운딩 박스 크기 설정
+min_width = 20  # 너비 최소값
+min_height = 20  # 높이 최소값
+
+def process_video():
+    # 카메라 캡처 객체 생성
+    cap = cv2.VideoCapture(2)
+
+    # 카메라 열기 실패시 종료
+    if not cap.isOpened():
+        print("Camera open failed!")
+        return
+
+    # 비디오 캡처 반복
+    while True:
+        # 프레임 캡처
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to grab frame.")
+            break
+        cv2.putText(frame, "point", (290, 480), cv2.FONT_HERSHEY_COMPLEX, 0.7, colors_bgr['blue'], 2)
+        # HSV 색공간으로 변환
+        hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # 각 색상별로 처리
+        for color, (lower, upper) in colors_hsv.items():
+            # 빨간색의 경우, 두 범위 모두 처리
+            if 'red' in color:
+                mask1 = cv2.inRange(hsv_image, colors_hsv['red_lower'][0], colors_hsv['red_lower'][1])
+                mask2 = cv2.inRange(hsv_image, colors_hsv['red_upper'][0], colors_hsv['red_upper'][1])
+                mask = cv2.bitwise_or(mask1, mask2)
+            else:
+                mask = cv2.inRange(hsv_image, lower, upper)
+            
+            # 윤곽선 찾기
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # 윤곽선을 바탕으로 바운딩 박스 및 라벨링
+            for contour in contours:
+                x, y, w, h = cv2.boundingRect(contour)
+                if w > min_width and h > min_height:  # 크기 필터링 조건
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), colors_bgr['red' if 'red' in color else color], 2)
+                    cv2.putText(frame, 'red' if 'red' in color else color, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors_bgr['red' if 'red' in color else color], 2)
+
+        # 결과 이미지 출력
+        cv2.imshow('Detected Colors', frame)
+
+        # 'q'를 누르면 종료
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # 자원 해제
+    cap.release()
+    cv2.destroyAllWindows()
+
+process_video()
 
 try:
     while cap.isOpened():
@@ -77,18 +144,7 @@ try:
             break
         #mc.set_gripper_value(0,20,1)
 
-        # 이미지 전처리
-        img = torch.from_numpy(frame).to(device)
-        img = img.float() / 255.0  # 0 - 255 to 0.0 - 1.0
-        img = img.permute(2, 0, 1).unsqueeze(0)
 
-        # 추론
-        with torch.no_grad():
-            pred = model(img)[0]
-
-        # NMS
-        pred = non_max_suppression(pred, 0.25, 0.45, classes=[64], agnostic=False)
- 
         # 감지된 객체 처리
         for i, det in enumerate(pred):  # detections per image
             if len(det):
