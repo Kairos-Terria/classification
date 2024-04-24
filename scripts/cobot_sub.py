@@ -34,76 +34,96 @@ def callback(block_data):
     # 가장 가까운 블록 정보를 전역 변수에 저장
     block = nearest_block
 
-def main_loop(mc):
-    rospy.init_node('block_subscriber', anonymous=True)
-    rospy.Subscriber('block_topic', Block, callback)  # 'block_topic'은 실제 토픽 이름으로 바꿔야 합니다.
-    rospy.wait_for_message('block_topic', Block)  # 최소한 하나의 메시지를 기다립니다.
+class MoveCobot:
+    def __init__(self):
 
-    width, height = 640, 480
-    mc.sync_send_coords([329, -55, 227, -178, -4, -83], 20, 1)
-    time.sleep(2)
-    init_coords = list(mc.get_coords())
-    print(mc.get_coords())
+        mc.sync_send_coords([329, -55, 227, -178, -4, -83], 20, 2)
+        mc.set_gripper_calibration()
+        mc.set_gripper_mode(0)
+        mc.init_eletric_gripper()
 
-    mc.set_gripper_calibration()
-    mc.set_gripper_mode(0)
-    mc.init_eletric_gripper()
+        self.init_coords = list(mc.get_coords())
 
-    while not rospy.is_shutdown():
-        if not block or None in block:
-            continue  # block 정보가 없거나 완전하지 않은 경우 루프 계속
-
-        x_center, y_center = block[0], block[1]
-        print('Block detected:', block[0:2])
-
-        if x_center < width * 0.48:
-            init_coords[1] += 1  # 왼쪽 이동
-        elif x_center > width * 0.52:
-            init_coords[1] -= 1  # 오른쪽 이동
-        elif width * 0.48 <= x_center <= width * 0.52:
-            if y_center < height * 0.90:
-                init_coords[0] += 1  # 왼쪽 이동
-            elif y_center > height * 0.95:
-                init_coords[0] -= 1  # 오른쪽 이동
-
-        mc.send_coord(1, init_coords[0], 20)
-        mc.send_coord(2, init_coords[1], 20)
-        #mc.send_coords(tuple(init_coords), 20, 1)
-        #print(mc.get_coords())
-        time.sleep(0.1)
-
-        if width * 0.48 <= x_center <= width * 0.52 and height * 0.90 <= y_center <= height * 0.95:
-            init_coords[0] = 5
-            mc.send_coord(1, init_coords[0], 20)
+        self.width = 640
+        self.w_min = width*0.48
         
-            init_coords[2] = 300
-            mc.send_coord(3, init_coords[2], 20)
-            time.sleep(2)
-            init_coords[3] = -175
-            mc.send_coord(4, init_coords[3], 20)
+        self.height = 480
 
-            mc.set_eletric_gripper(1)
-            mc.set_gripper_value(0, 20, 1)
-            time.sleep(2)
-            if block[2] == "red" or block[2] == "blue":
-                mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)  # Assuming this resets the position
-                mc.set_eletric_gripper(0)
-                mc.set_gripper_value(100, 20, 1)
-            else:
-                mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)  # Assuming this resets the position
-                mc.set_eletric_gripper(0)
-                mc.set_gripper_value(100, 20, 1)
+    def move_to_x_center(self, x_center):
+        if x_center < self.w_min:
+            self.init_coords[1] += 1
+        elif x_center > w_max:
+            self.init_coords[1] -= 1
+        else:
+            return True
 
-            mc.sync_send_coords([239, -60, 331, -176, 0, -83], 20, 1)
+        return False
 
-            print("Task completed with:", block[2])
-            break
+    def move_to_y_center(self, y_center):
+        if y_center < self.h_min:
+            self.init_coords[0] += 1
+        elif y_center > self.h_max:
+            self.init_coords[0] -= 1
+        else:
+            return True
 
-        # 이하 로직은 초기 제공된 코드와 같습니다.
-        # 여기에 조건문과 로직을 추가하여 로봇팔 조정
-        # ...
+        return False
+
+    def main_loop(self, mc):
+        rospy.Subscriber('block_topic', Block, callback)  # 'block_topic'은 실제 토픽 이름으로 바꿔야 합니다.
+        rospy.wait_for_message('block_topic', Block)  # 최소한 하나의 메시지를 기다립니다.
+
+        w_min, w_max = width*0.48, width*0.52
+        h_min, h_max = height*0.90, height*0.95
+
+        while not rospy.is_shutdown():
+            if not block or None in block:
+                continue  # block 정보가 없거나 완전하지 않은 경우 루프 계속
+
+            x_center, y_center = block[0], block[1]
+            print('Block detected:', block[0:2])
+
+            while not self.move_to_x_center(x_center):
+                    mc.send_coord(1, init_coords[0], 20)
+
+            while not self.move_to_y_center(y_center):
+                    mc.send_coord(1, init_coords[1], 20)
+
+            time.sleep(0.1)
+
+            if w_min <= x_center <= w_max and h_min <= y_center <= h_max:
+                init_coords[0] = 5
+                mc.send_coord(1, init_coords[0], 20)
+            
+                init_coords[2] = 300
+                mc.send_coord(3, init_coords[2], 20)
+                time.sleep(2)
+                init_coords[3] = -175
+                mc.send_coord(4, init_coords[3], 20)
+
+                mc.set_eletric_gripper(1)
+                mc.set_gripper_value(0, 20, 1)
+                time.sleep(2)
+                if block[2] == "red" or block[2] == "blue":
+                    mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)  # Assuming this resets the position
+                    mc.set_eletric_gripper(0)
+                    mc.set_gripper_value(100, 20, 1)
+                else:
+                    mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)  # Assuming this resets the position
+                    mc.set_eletric_gripper(0)
+                    mc.set_gripper_value(100, 20, 1)
+
+                mc.sync_send_coords([239, -60, 331, -176, 0, -83], 20, 1)
+
+                print("Task completed with:", block[2])
+                break
+
 
 if __name__ == "__main__":
+    rospy.init_node('block_subscriber', anonymous=True)
+
     mc = MyCobot("/dev/ttyACM0", 115200)
+    m = MoveCobot()
+
     while True:
-        main_loop(mc)
+        m.main_loop(mc)
