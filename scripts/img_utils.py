@@ -5,10 +5,11 @@ class ColorExtractor:
     def __init__(self):
         self.cap = cv2.VideoCapture(2)
 
-        self.threshold = {'red': [np.array([0, 0, 100]), np.array([120, 120, 255])], #red
-                          'yellow': [np.array([0, 100, 100]), np.array([100, 230, 255])], #yellow
-                          'blue': [np.array([100, 140, 200]), np.array([255, 255, 200])], #blue
-                          'purple': [np.array([250, 30, 30]), np.array([300, 100, 100])]} #purple
+        self.threshold = {'red_lower': [np.array([0, 0, 100]), np.array([120, 120, 255])], #red
+                          'red_upper': [np.array([170, 120, 120]), np.array([180, 255, 255])], #red
+                          'yellow': [np.array([22, 130, 140]), np.array([38, 255, 255])], #yellow
+                          'blue': [np.array([100, 100, 120]), np.array([130, 255, 255])], #blue
+                          'purple': [np.array([125, 50, 50]), np.array([150, 255, 255])]} #purple
 
         self.threshold_len = len(self.threshold)
 
