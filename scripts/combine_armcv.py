@@ -17,8 +17,10 @@ min_height = 3
 
 def process_video(mc):
     width, height = 640, 480
-    mc.sync_send_coords([239, -60, 331, -176, 0, -83], 20, 1)
-    time.sleep(2)
+    #mc.sync_send_coords([239, -60, 331, -176, 0, -83], 20, 1) # 높은버전
+    #mc.sync_send_coords([240.5, -101.6, 256.3, 177.98, 0.97, -93.19], 20, 1)
+    mc.sync_send_coords([329, -55, 227, -178, -4, -83], 20, 1)
+
     init_coords = list(mc.get_coords())
     print(init_coords)
     
@@ -71,9 +73,9 @@ def process_video(mc):
             elif x_center > width * 0.52:
                 init_coords[1] -= 1  # 오른쪽 이동
             elif width * 0.48 <= x_center <= width * 0.52:
-                if y_center < height * 0.90:
+                if y_center < height * 0.85:
                     init_coords[0] += 1  # 왼쪽 이동
-                elif y_center > height * 0.95:
+                elif y_center > height * 0.90:
                     init_coords[0] -= 1  # 오른쪽 이동
 
             mc.send_coord(1, init_coords[0], 20)
@@ -82,27 +84,38 @@ def process_video(mc):
             #print(mc.get_coords())
             time.sleep(0.1)
 
-            if width * 0.48 <= x_center <= width * 0.52 and height * 0.90 <= y_center <= height * 0.95:
-                init_coords[0] = 5
-                mc.send_coord(1, init_coords[0], 20)
+            if width * 0.48 <= x_center <= width * 0.52 and height * 0.85 <= y_center <= height * 0.90:
+                init_coords[0] += 20
+                #mc.send_coord(1, init_coords[0], 20)
+                mc.send_coords(tuple(init_coords), 20, 1)
+                time.sleep(2)
             
                 init_coords[2] = 300
-                mc.send_coord(3, init_coords[2], 20)
+                #mc.send_coord(3, init_coords[2], 20)
+                mc.send_coords(tuple(init_coords), 20, 1)
+
                 time.sleep(2)
                 init_coords[3] = -175
-                mc.send_coord(4, init_coords[3], 20)
+                mc.send_coords(tuple(init_coords), 20, 0)
+
+                #mc.send_coord(4, init_coords[3], 20)
 
                 mc.set_eletric_gripper(1)
                 mc.set_gripper_value(0, 20, 1)
                 time.sleep(2)
                 if block[2] == "red" or block[2] == "blue":
-                    mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)  # Assuming this resets the position
+                    mc.sync_send_coords([207, -230, 300, -175, -5, -120], 20, 1)  # Assuming this resets the position
+                    time.sleep(1)
                     mc.set_eletric_gripper(0)
                     mc.set_gripper_value(100, 20, 1)
+                    time.sleep(2)
                 else:
-                    mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)  # Assuming this resets the position
+                    mc.sync_send_coords([251, 230, 300, 175, -5, -30], 20, 1)  # Assuming this resets the position
+                    time.sleep(1)
+
                     mc.set_eletric_gripper(0)
                     mc.set_gripper_value(100, 20, 1)
+                    time.sleep(2)
 
                 mc.sync_send_coords([239, -60, 331, -176, 0, -83], 20, 1)
  
