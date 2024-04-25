@@ -22,7 +22,7 @@ class ColorExtractor:
         self.width = 640
         self.height = 480
 
-        self.pub = rospy.Publisher('/color_xy', Block, queue_size=10)
+        self.pub = rospy.Publisher('/block/color_xy', Block, queue_size=10)
 
     def get_color(self):
 
@@ -69,7 +69,7 @@ class ColorExtractor:
 
 if __name__=='__main__':
     c = ColorExtractor()
-    rospy.init_node('publish')
+    rospy.init_node('publish_block')
 
     while not rospy.is_shutdown():
         c.get_color()

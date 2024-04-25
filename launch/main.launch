@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="classification" type="publish_block.py" name="publish_block"/>
+	<node pkg="classification" type="cobot_sub.py" name="subscribe_block" output="screen"/>
+</launch>
