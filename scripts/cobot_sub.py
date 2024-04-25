@@ -15,14 +15,18 @@ mc = MyCobot("/dev/ttyACM0", 115200)
 class MoveCobot:
     def __init__(self):
 
+        self.init_done = False
         self.init_coords = self.init_mycobot()
 
         self.blocks = list()
 
-        self.width = 640
+        self.width = 2592
         self.w_min = self.width*0.48
+        self.w_max = self.width*0.52
         
-        self.height = 480
+        self.height = 1944
+        self.h_min = self.height*0.90 
+        self.h_max = self.height*0.95
 
         self.block_sub = rospy.Subscriber('/block/color_xy', Block, self.block_callback)
 
@@ -35,51 +39,64 @@ class MoveCobot:
 
 
     def init_mycobot(self):
-        mc.sync_send_coords([329, -55, 227, -178, -4, -83], 20, 1)
+        mc.sync_send_angles([0, 0, 0, 0, 0, 0], 20)
+        mc.sync_send_angles([0, -120, 130, -90, 90, 0], 20)
         mc.set_gripper_calibration()
         mc.set_gripper_mode(0)
         mc.init_eletric_gripper()
         time.sleep(2)
         print('initialize..')
+        self.init_done = True
         
         return list(mc.get_coords())
         
     def move_to_x_center(self, x_center):
         if x_center < self.w_min:
-            self.init_coords[1] += 1
+            self.init_coords[1] += 5
         elif x_center > self.w_max:
-            self.init_coords[1] -= 1
+            self.init_coords[1] -= 5
         else:
+            print('x done')
             return True
+
+        mc.send_coords(self.init_coords, 20, 1)
 
         return False
 
     def move_to_y_center(self, y_center):
         if y_center < self.h_min:
-            self.init_coords[0] += 1
+            self.init_coords[0] += 5
         elif y_center > self.h_max:
-            self.init_coords[0] -= 1
+            self.init_coords[0] -= 5
         else:
+            print('y done')
             return True
+
+        mc.send_coords(self.init_coords, 20, 1)
 
         return False
     
-    def z_calbration(self):
-        self.init_coords[2] = list(mc.get_coords())[2]
 
     def grab_block(self, x_center, y_center):
-        init_coords[0] = 5
-        mc.send_coord(1, init_coords[0], 20)
+        print('start grab')
+        self.init_coords[0] += 5
+        mc.send_coords(self.init_coords, 20, 1)
     
-        init_coords[2] = 300
-        mc.send_coord(3, init_coords[2], 20)
-        time.sleep(2)
-        init_coords[3] = -175
-        mc.send_coord(4, init_coords[3], 20)
+        #self.init_coords[2] = 170
+        #mc.send_coords(self.init_coords, 20, 1)
+        #time.sleep(2)
+        #self.init_coords[3] = -175
+        #mc.send_coords(self.init_coords, 20, 1)
 
         mc.set_eletric_gripper(1)
-        mc.set_gripper_value(0, 20, 1)
+        mc.set_gripper_value(20, 20, 1)
         time.sleep(2)
+
+        mc.set_eletric_gripper(0)
+        mc.set_gripper_value(100, 20, 1)
+        time.sleep(2)
+
+        """
         if block[2] == "red" or block[2] == "blue":
             mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)  # Assuming this resets the position
             mc.set_eletric_gripper(0)
@@ -89,14 +106,23 @@ class MoveCobot:
             mc.set_eletric_gripper(0)
             mc.set_gripper_value(100, 20, 1)
 
+        """
     def main_loop(self):
 
         while True:
             if self.blocks:
-                print(self.blocks)
-                time.sleep(3)
-            else:
-                print('there is no block')
+                color, x, y = self.blocks.pop()
+
+                print(color, x, y)
+                if self.move_to_x_center(x):
+                    if self.move_to_y_center(y):
+                        self.grab_block(x, y)
+                        break
+            
+            self.blocks = list()
+
+        print('d')
+                      
 
         """
         w_min, w_max = self.width*0.48, self.width*0.52
@@ -123,11 +149,16 @@ if __name__ == "__main__":
 
     try:
         m = MoveCobot()
-        t1 = threading.Thread(target=m.main_loop, daemon=True)
-        t1.start()
+        if m.init_done:
+            t1 = threading.Thread(target=m.main_loop, daemon=True)
+            t1.start()
 
         while not rospy.is_shutdown():
             rospy.spin()
+
+        mc.set_eletric_gripper(0)
+        mc.set_gripper_value(100, 20, 1)
+        time.sleep(2)
 
     except rospy.ROSInterruptException:
         pass

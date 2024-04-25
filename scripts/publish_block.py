@@ -16,7 +16,7 @@ class ColorExtractor:
 
         self.threshold_len = len(self.threshold)
 
-        self.draw = True
+        self.draw = False
         self.color = [[np.random.randint(0, 255) for _ in range(3)] for _ in self.threshold]
 
         self.width = 640
@@ -62,10 +62,11 @@ class ColorExtractor:
 
             self.pub.publish(msg)
 
-            cv2.namedWindow("window", cv2.WINDOW_NORMAL)
-            cv2.resizeWindow("window", width=self.width, height=self.height)
-            cv2.imshow("window", frame)
-            cv2.waitKey(1)
+            if self.draw:
+                cv2.namedWindow("window", cv2.WINDOW_NORMAL)
+                cv2.resizeWindow("window", width=self.width, height=self.height)
+                cv2.imshow("window", frame)
+                cv2.waitKey(1)
 
 if __name__=='__main__':
     c = ColorExtractor()
