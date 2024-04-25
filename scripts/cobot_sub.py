@@ -17,7 +17,7 @@ class MoveCobot:
 
         self.init_coords = self.init_mycobot()
 
-        self.blocks = None
+        self.blocks = list()
 
         self.width = 640
         self.w_min = self.width*0.48
@@ -27,13 +27,11 @@ class MoveCobot:
         self.block_sub = rospy.Subscriber('/block/color_xy', Block, self.block_callback)
 
     def block_callback(self, block_data):
-
-        self.blocks = [
-            ('red', block_data.rx, block_data.ry) if block_data.r else None,
-            ('yellow', block_data.yx, block_data.yy) if block_data.y else None,
-            ('blue', block_data.bx, block_data.by) if block_data.b else None,
-            ('purple', block_data.px, block_data.py) if block_data.p else None
-        ]
+        self.blocks = list()
+        if block_data.r: self.blocks.append(('red', block_data.rx, block_data.ry))
+        if block_data.y: self.blocks.append(('yellow', block_data.yx, block_data.yy))
+        if block_data.b: self.blocks.append(('blue', block_data.bx, block_data.by))
+        if block_data.p: self.blocks.append(('purple', block_data.px, block_data.py))
 
 
     def init_mycobot(self):
@@ -91,10 +89,14 @@ class MoveCobot:
             mc.set_eletric_gripper(0)
             mc.set_gripper_value(100, 20, 1)
 
-    def main_loop(self, mc):
+    def main_loop(self):
 
-        if None not in self.blocks:
-            print('start loop')
+        while True:
+            if self.blocks:
+                print(self.blocks)
+                time.sleep(3)
+            else:
+                print('there is no block')
 
         """
         w_min, w_max = self.width*0.48, self.width*0.52
