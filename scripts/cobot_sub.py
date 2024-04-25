@@ -41,10 +41,12 @@ class MoveCobot:
     def init_mycobot(self):
         mc.sync_send_angles([0, 0, 0, 0, 0, 0], 20)
         mc.sync_send_angles([0, -120, 130, -90, 90, 0], 20)
+
         mc.set_gripper_calibration()
         mc.set_gripper_mode(0)
         mc.init_eletric_gripper()
-        time.sleep(2)
+        time.sleep(1)
+
         print('initialize..')
         self.init_done = True
         
@@ -81,6 +83,7 @@ class MoveCobot:
         print('start grab')
         self.init_coords[0] += 5
         mc.send_coords(self.init_coords, 20, 1)
+        time.sleep(2)
     
         #self.init_coords[2] = 170
         #mc.send_coords(self.init_coords, 20, 1)
@@ -88,12 +91,12 @@ class MoveCobot:
         #self.init_coords[3] = -175
         #mc.send_coords(self.init_coords, 20, 1)
 
-        mc.set_eletric_gripper(1)
-        mc.set_gripper_value(20, 20, 1)
+        mc.set_eletric_gripper(0)
+        mc.set_gripper_value(0,20,1)
         time.sleep(2)
 
         mc.set_eletric_gripper(0)
-        mc.set_gripper_value(100, 20, 1)
+        mc.set_gripper_value(100,20,1)
         time.sleep(2)
 
         """
@@ -157,7 +160,7 @@ if __name__ == "__main__":
             rospy.spin()
 
         mc.set_eletric_gripper(0)
-        mc.set_gripper_value(100, 20, 1)
+        mc.set_gripper_value(100,20,1)
         time.sleep(2)
 
     except rospy.ROSInterruptException:
