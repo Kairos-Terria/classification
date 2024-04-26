@@ -52,11 +52,14 @@ class ColorExtractor:
             if len(contour) > 0:
                 max_contour = max(contour, key=cv2.contourArea)
                 x, y, w, h = cv2.boundingRect(max_contour)
-                cx, cy = int(x+w/2), int(y+h/2)
-                if self.draw:
-                    cv2.rectangle(image, (x, y), (x + w, y + h), self.color[i], 2)
+                if w*h > 80*80:
+                    cx, cy = int(x+w/2), int(y+h/2)
+                    if self.draw:
+                        cv2.rectangle(image, (x, y), (x + w, y + h), self.color[i], 2)
 
-                temp.append([True, cx, cy])
+                    temp.append([True, cx, cy])
+                else:
+                    temp.append([False, 0, 0])
             else:
                 temp.append([False, 0, 0])
 

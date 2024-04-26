@@ -19,19 +19,14 @@ class MoveCobot:
         self.init_done = False
         self.init_coords = self.init_mycobot()
 
+        self.coords = {'zero': [0, 0, 0, 0, 0, 0],
+                       'init': [0, -120, 130, -90, 90, 0]}
+
         self.blocks = list()
 
         self.width, self.w_min, self.w_max = None, None, None
         self.height, self.h_min, self.h_max = None, None, None
         self.step = None
-
-        self.width = 2592
-        self.w_min = self.width*0.48
-        self.w_max = self.width*0.52
-        
-        self.height = 1944
-        self.h_min = self.height*0.90 
-        self.h_max = self.height*0.95
 
         self.block_sub = rospy.Subscriber('/block/color_xy', Block, self.block_callback)
         self.img_info_sub = rospy.Subscriber('/image/image_wh_s', ImageInfo, self.img_info_callback)
@@ -95,41 +90,31 @@ class MoveCobot:
         return False
     
 
-    def grab_block(self, x_center, y_center):
+    def grab_block(self, color, x_center, y_center):
         print('start grab')
-        print(list(mc.get_coords()))
         self.init_coords[0] += 5
         mc.send_coords(self.init_coords, 20, 1)
         time.sleep(2)
-    
-        self.init_coords[2] = 170
-        mc.send_coords(self.init_coords, 20, 1)
-        time.sleep(2)
-        print(list(mc.get_coords()))
 
-        #self.init_coords[3] = -175
+        #self.init_coords[2] = 160
         #mc.send_coords(self.init_coords, 20, 1)
-        #print(list(mc.get_coords()))
+        #time.sleep(2)
 
         mc.set_eletric_gripper(0)
         mc.set_gripper_value(0,20,1)
         time.sleep(2)
 
+        if color in ["red", "blue"]:
+            mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)
+        else:
+            mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)
+
         mc.set_eletric_gripper(0)
         mc.set_gripper_value(100,20,1)
         time.sleep(2)
 
-        """
-        if block[2] == "red" or block[2] == "blue":
-            mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)  # Assuming this resets the position
-            mc.set_eletric_gripper(0)
-            mc.set_gripper_value(100, 20, 1)
-        else:
-            mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)  # Assuming this resets the position
-            mc.set_eletric_gripper(0)
-            mc.set_gripper_value(100, 20, 1)
+        mc.sync_send_angles(self.coords['init'], 20)
 
-        """
     def main_loop(self):
 
         while True:
@@ -139,34 +124,12 @@ class MoveCobot:
                 print(color, x, y)
                 if self.move_to_x_center(x):
                     if self.move_to_y_center(y):
-                        self.grab_block(x, y)
-                        break
-            
+                        self.grab_block(color, x, y)
+
             self.blocks = list()
 
         print('d')
                       
-
-        """
-        w_min, w_max = self.width*0.48, self.width*0.52
-        h_min, h_max = self.height*0.90, self.height*0.95
-
-        x_center, y_center = block[0], block[1]
-        print('Block detected:', block[0:2])
-
-        while self.move_to_x_center(x_center):
-            mc.send_coord(1, self.init_coords[0], 20)
-
-        while self.move_to_y_center(y_center):
-            mc.send_coord(2, self.init_coords[1], 20)
-
-        grab_block(self, x_center, y_center)
-
-        mc.sync_send_coords([239, -60, 331, -176, 0, -83], 20, 1)
-
-        print("Task completed with:", block[2])
-        """
-
 if __name__ == "__main__":
     rospy.init_node('block_subscriber', anonymous=False)
 
