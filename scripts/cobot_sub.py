@@ -94,24 +94,24 @@ class MoveCobot:
         print('start grab')
         self.init_coords[0] += 5
         mc.send_coords(self.init_coords, 20, 1)
-        time.sleep(2)
 
         #self.init_coords[2] = 160
         #mc.send_coords(self.init_coords, 20, 1)
         #time.sleep(2)
 
         mc.set_eletric_gripper(0)
-        mc.set_gripper_value(0,20,1)
+        mc.set_gripper_value(0, 20, 1)
         time.sleep(2)
 
         if color in ["red", "blue"]:
-            mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)
+            mc.send_coords([207, -234, 304, -164, -8, -123], 20, 1)
         else:
-            mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)
+            mc.send_coords([251, 197, 243, 177, -5, -35], 20, 1)
 
-        mc.set_eletric_gripper(0)
-        mc.set_gripper_value(100,20,1)
-        time.sleep(2)
+        if not mc.is_moving()
+            mc.set_eletric_gripper(0)
+            mc.set_gripper_value(100,20,1)
+            time.sleep(2)
 
     def main_loop(self):
 

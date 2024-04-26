@@ -11,7 +11,7 @@ from classification.msg import Block
 class ColorExtractor:
     def __init__(self):
 
-        self.threshold = {'red': [np.array([170, 100, 100]), np.array([180, 255, 255])], #red
+        self.threshold = {'red': [np.array([170, 100, 80]), np.array([180, 255, 255])], #red
                           'yellow': [np.array([20, 100, 100]), np.array([30, 255, 255])], #yellow
                           'blue': [np.array([100, 100, 80]), np.array([130, 255, 255])], #blue
                           'purple': [np.array([125, 50, 50]), np.array([150, 255, 255])]} #purple
