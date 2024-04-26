@@ -16,6 +16,8 @@ mc = MyCobot("/dev/ttyACM0", 115200)
 class MoveCobot:
     def __init__(self):
 
+        self.speed = 60
+
         self.init_done = False
         self.init_coords = self.init_mycobot()
 
@@ -50,8 +52,8 @@ class MoveCobot:
         self.step = data.step
 
     def init_mycobot(self):
-        mc.sync_send_angles([0, 0, 0, 0, 0, 0], 20)
-        mc.sync_send_angles([0, -120, 130, -90, 90, 0], 20)
+        mc.sync_send_angles(self.coords['zero'], self.speed)
+        mc.sync_send_angles(self.coords['init'], self.speed)
 
         mc.set_gripper_calibration()
         mc.set_gripper_mode(0)
@@ -64,6 +66,7 @@ class MoveCobot:
         return list(mc.get_coords())
         
     def move_to_x_center(self, x_center):
+
         if x_center < self.w_min:
             self.init_coords[1] += self.step
         elif x_center > self.w_max:
@@ -72,7 +75,7 @@ class MoveCobot:
             print('x done')
             return True
 
-        mc.send_coords(self.init_coords, 20, 1)
+        mc.send_coords(self.init_coords, self.speed, 1)
 
         return False
 
@@ -85,7 +88,7 @@ class MoveCobot:
             print('y done')
             return True
 
-        mc.send_coords(self.init_coords, 20, 1)
+        mc.send_coords(self.init_coords, self.speed, 1)
 
         return False
     
@@ -93,24 +96,20 @@ class MoveCobot:
     def grab_block(self, color, x_center, y_center):
         print('start grab')
         self.init_coords[0] += 5
-        mc.send_coords(self.init_coords, 20, 1)
+        mc.send_coords(self.init_coords, self.speed, 1)
         time.sleep(2)
 
-        #self.init_coords[2] = 160
-        #mc.send_coords(self.init_coords, 20, 1)
-        #time.sleep(2)
-
         mc.set_eletric_gripper(0)
-        mc.set_gripper_value(0,20,1)
+        mc.set_gripper_value(0, self.speed, 1)
         time.sleep(2)
 
         if color in ["red", "blue"]:
-            mc.sync_send_coords([207, -234, 304, -164, -8, -123], 20, 1)
+            mc.sync_send_coords([207, -234, 304, -164, -8, -123], self.speed, 1, timeout=3)
         else:
-            mc.sync_send_coords([251, 197, 243, 177, -5, -35], 20, 1)
+            mc.sync_send_coords([251, 197, 243, 177, -5, -35], self.speed, 1, timeout=3)
 
         mc.set_eletric_gripper(0)
-        mc.set_gripper_value(100,20,1)
+        mc.set_gripper_value(100, self.speed, 1)
         time.sleep(2)
 
     def main_loop(self):
@@ -124,7 +123,7 @@ class MoveCobot:
                     if self.move_to_y_center(y):
                         self.grab_block(color, x, y)
 
-                        mc.sync_send_angles(self.coords['init'], 20)
+                        mc.sync_send_angles(self.coords['init'], self.speed)
                         self.init_coords = list(mc.get_coords())
 
             self.blocks = list()
@@ -142,7 +141,7 @@ if __name__ == "__main__":
             rospy.spin()
 
         mc.set_eletric_gripper(0)
-        mc.set_gripper_value(100,20,1)
+        mc.set_gripper_value(100, 20, 1)
         time.sleep(2)
 
     except rospy.ROSInterruptException:
