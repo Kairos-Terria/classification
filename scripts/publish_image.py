@@ -15,7 +15,7 @@ def publish_image():
     ii = ImageInfo()
     ii.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     ii.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    ii.step = 1 if ii.width < 1000 else 5
+    ii.step = 1 if ii.width < 1000 else 10
 
     while not rospy.is_shutdown() and cap.isOpened():
         ret, frame = cap.read()

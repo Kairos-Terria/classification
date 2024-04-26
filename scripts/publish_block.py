@@ -13,12 +13,12 @@ class ColorExtractor:
 
         self.threshold = {'red': [np.array([170, 100, 100]), np.array([180, 255, 255])], #red
                           'yellow': [np.array([20, 100, 100]), np.array([30, 255, 255])], #yellow
-                          'blue': [np.array([100, 100, 100]), np.array([130, 255, 255])], #blue
+                          'blue': [np.array([100, 100, 80]), np.array([130, 255, 255])], #blue
                           'purple': [np.array([125, 50, 50]), np.array([150, 255, 255])]} #purple
 
         self.threshold_len = len(self.threshold)
 
-        self.draw = True
+        self.draw = False
         self.color = [[np.random.randint(0, 255) for _ in range(3)] for _ in self.threshold]
         self.window_width = 640
         self.window_height = 480

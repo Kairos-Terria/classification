@@ -113,8 +113,6 @@ class MoveCobot:
         mc.set_gripper_value(100,20,1)
         time.sleep(2)
 
-        mc.sync_send_angles(self.coords['init'], 20)
-
     def main_loop(self):
 
         while True:
@@ -126,9 +124,10 @@ class MoveCobot:
                     if self.move_to_y_center(y):
                         self.grab_block(color, x, y)
 
-            self.blocks = list()
+                        mc.sync_send_angles(self.coords['init'], 20)
+                        self.init_coords = list(mc.get_coords())
 
-        print('d')
+            self.blocks = list()
                       
 if __name__ == "__main__":
     rospy.init_node('block_subscriber', anonymous=False)
