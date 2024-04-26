@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from classification.msg import Block
+from classification.msg import Block, ImageInfo
+
 import cv2
 import torch
 from numpy import random
@@ -20,6 +21,10 @@ class MoveCobot:
 
         self.blocks = list()
 
+        self.width, self.w_min, self.w_max = None, None, None
+        self.height, self.h_min, self.h_max = None, None, None
+        self.step = None
+
         self.width = 2592
         self.w_min = self.width*0.48
         self.w_max = self.width*0.52
@@ -29,6 +34,7 @@ class MoveCobot:
         self.h_max = self.height*0.95
 
         self.block_sub = rospy.Subscriber('/block/color_xy', Block, self.block_callback)
+        self.img_info_sub = rospy.Subscriber('/image/image_wh_s', ImageInfo, self.img_info_callback)
 
     def block_callback(self, block_data):
         self.blocks = list()
@@ -37,6 +43,16 @@ class MoveCobot:
         if block_data.b: self.blocks.append(('blue', block_data.bx, block_data.by))
         if block_data.p: self.blocks.append(('purple', block_data.px, block_data.py))
 
+    def img_info_callback(self, data):
+        self.width = data.width
+        self.w_min = self.width*0.48
+        self.w_max = self.width*0.52
+        
+        self.height = data.height
+        self.h_min = self.height*0.90 
+        self.h_max = self.height*0.95
+
+        self.step = data.step
 
     def init_mycobot(self):
         mc.sync_send_angles([0, 0, 0, 0, 0, 0], 20)
@@ -54,9 +70,9 @@ class MoveCobot:
         
     def move_to_x_center(self, x_center):
         if x_center < self.w_min:
-            self.init_coords[1] += 5
+            self.init_coords[1] += self.step
         elif x_center > self.w_max:
-            self.init_coords[1] -= 5
+            self.init_coords[1] -= self.step
         else:
             print('x done')
             return True
@@ -67,9 +83,9 @@ class MoveCobot:
 
     def move_to_y_center(self, y_center):
         if y_center < self.h_min:
-            self.init_coords[0] += 5
+            self.init_coords[0] += self.step
         elif y_center > self.h_max:
-            self.init_coords[0] -= 5
+            self.init_coords[0] -= self.step
         else:
             print('y done')
             return True
@@ -81,15 +97,19 @@ class MoveCobot:
 
     def grab_block(self, x_center, y_center):
         print('start grab')
+        print(list(mc.get_coords()))
         self.init_coords[0] += 5
         mc.send_coords(self.init_coords, 20, 1)
         time.sleep(2)
     
-        #self.init_coords[2] = 170
-        #mc.send_coords(self.init_coords, 20, 1)
-        #time.sleep(2)
+        self.init_coords[2] = 170
+        mc.send_coords(self.init_coords, 20, 1)
+        time.sleep(2)
+        print(list(mc.get_coords()))
+
         #self.init_coords[3] = -175
         #mc.send_coords(self.init_coords, 20, 1)
+        #print(list(mc.get_coords()))
 
         mc.set_eletric_gripper(0)
         mc.set_gripper_value(0,20,1)
