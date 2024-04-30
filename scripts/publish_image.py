@@ -10,8 +10,8 @@ def publish_image():
     image_pub = rospy.Publisher('/image/image_raw', Image, queue_size=10)
     image_info_pub = rospy.Publisher('/image/image_wh_s', ImageInfo, queue_size=10)
 
-    cap = cv2.VideoCapture(2)
-
+    cap = cv2.VideoCapture("dev/video2")
+    print("ok")
     ii = ImageInfo()
     ii.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     ii.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))

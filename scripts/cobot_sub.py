@@ -19,10 +19,11 @@ class MoveCobot:
         self.speed = 60
 
         self.init_done = False
-        self.init_coords = self.init_mycobot()
-
         self.coords = {'zero': [0, 0, 0, 0, 0, 0],
                        'init': [0, -120, 130, -90, 90, 0]}
+        self.init_coords = self.init_mycobot()
+
+
 
         self.blocks = list()
 
@@ -81,7 +82,7 @@ class MoveCobot:
 
     def move_to_y_center(self, y_center):
         if y_center < self.h_min:
-            self.init_coords[0] += self.step
+            self.init_coords[0] += self.step 
         elif y_center > self.h_max:
             self.init_coords[0] -= self.step
         else:
@@ -113,6 +114,7 @@ class MoveCobot:
         time.sleep(2)
 
     def main_loop(self):
+        print("start")
 
         while True:
             if self.blocks:

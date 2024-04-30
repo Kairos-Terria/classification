@@ -78,7 +78,7 @@ class ColorExtractor:
 
 if __name__=='__main__':
     rospy.init_node('publish_block')
-
+    print("ok")
     ColorExtractor()
 
     while not rospy.is_shutdown():
